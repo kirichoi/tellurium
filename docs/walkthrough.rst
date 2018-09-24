@@ -203,6 +203,59 @@ Exporting to Jupyter
 
 Tellurium notebooks can contain special cell types such as the SBML or OMEX cells described above. These notebooks cannot be properly read by Jupyter. However, you can export these notebooks to Jupyter by choosing ``File`` -> ``Export to Jupyter...`` from the menu. You will notice that the exported notebooks contain special cell magics such as ``%%crn`` and ``%%omex``. To run these notebooks in Jupyter, install the ``temagics`` package in addition to ``tellurium`` using pip.
 
+Advanced Topics
+===============
+
+.. _other-kernels:
+
+Using Other Jupyter Kernels / Languages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A built-in Python 3 kernel is provided with the notebook app. However, there are cases where this is not enough. Tellurium owes its existance in part to great free / open-source projects like `nteract <https://nteract.io/desktop>`_. We recommend anyone interest in a general-purpose notebook environment `consider nteract instead <https://nteract.io/desktop>`_.
+
+Nevertheless, sometimes using a kernel other than the built-in Python 3 kernel is necessary. Starting with version 2.0.14, Tellurium supports automated discovery of other Jupyter kernels, such as different Python versions and distributions (e.g. Anaconda) and other languages (the Tellurium packages are not available in other languages). The following example shows how to use an `R <https://www.r-project.org/>`_ kernel with Tellurium.
+
+* First, follow the installation instructions for the `IRkernel <https://github.com/IRkernel/IRkernel>`_ (`see also <https://irkernel.github.io/installation/>`_). These instructions use R 3.3.0. The following procedure for installing the IRkernel works for us:
+
+.. code-block:: r
+
+    install.packages('devtools')
+    install.packages(c('repr', 'IRdisplay', 'evaluate', 'crayon', 'pbdZMQ', 'devtools', 'uuid', 'digest'))
+    devtools::install_github('IRkernel/IRkernel')
+
+* Make sure the IRkernel is registered:
+
+.. code-block:: r
+
+    IRkernel::installspec()
+
+* Start the Tellurium notebook app. Under the ``Language`` menu, select ``Find Kernels...``. A pop-up with a ``Scan`` button should appear. Click the ``Scan`` button. The results of the scan show all the kernels available to Tellurium. The built-in Python 3 and Node.js kernels are always available. Additional kernels appear based on installed Jupyter kernels. If you don't see a Jupyter kernel you want here, make sure you have correctly installed the kernel (each his its own set of instructions). If the kernel still does not show up, make sure it is a true Jupyter kernel. Older IPython-based kernels (i.e. kernels which install under ``~/.ipython`` instead of ``~/.jupyter``) cannot be discovered by Tellurium.
+
+.. figure:: ./images/notebook-found-kernels.png
+    :align: center
+    :alt: Displaying the available kernels after a scan
+    :figclass: align-center
+
+    Displaying the available kernels after a scan
+
+* Sometimes the path to a kernel's executable can be displayed by hovering over the kernel's name. The R kernel you installed should appear in the list. Click the accept button to cause the ``Language`` menu to be updated with the new kernel choices.
+
+.. figure:: ./images/notebook-kernel-spec-mouse-over.png
+    :align: center
+    :alt: Hover over the name of a kernel to display its path
+    :figclass: align-center
+
+    Hover over the name of a kernel to display its path
+
+* By selecting ``Language`` -> ``R``, you can cause the notebook to switch to the IRkernel. All code cells will be interpreted as R (SBML and OMEX cells will not work).
+
+.. figure:: ./images/notebook-r-demo.png
+    :align: center
+    :alt: Demo of running an R kernel in Tellurium
+    :figclass: align-center
+
+    Demo of running an R kernel in Tellurium
+
 --------------------------------
 
 Notebook Troubleshooting
@@ -266,12 +319,103 @@ Further Reading
 IDE Walkthrough
 ====================
 
-If you have not already done so, download and install the `Tellurium IDE front-end <https://github.com/sys-bio/tellurium#front-end-2-tellurium-ide>`_ for your platform (only for Windows, legacy versions supported Mac).
+If you have not already done so, download and install the `Tellurium Spyder IDE front-end <https://github.com/sys-bio/tellurium#front-end-2-tellurium-spyder-ide>`_ for your platform (only for Windows, legacy versions supported Mac).
+
+Basics
+~~~~~~
+
+Tellurium Spyder is based on Spyder IDE, a popular open-source integrated development environment for Python. Tellurium Spyder offers experience akin to MATLAB, allowing you to view, edit, and execute Python scripts through dedicated editor and console windows. Addtionally, Tellurium Spyder comes with various tools to help you code. When you first open Tellurium Spyder, you will be greeted by an editor pane with example script, an IPython console, and a Help pane. You can execute the script in the editor pane directly on the IPython console by:
+
+* Pressing the green arrow
+* Pressing ``F5``
+* Pressing ``Run`` -> ``Run``
+
+The example script contains an oscillation model. When you run the script, a plot will appear in the IPython console as the output.
+
+.. figure:: ./images/spyder-overview.png
+    :align: center
+    :alt: Output of running the example script
+    :figclass: align-center
+
+    Output of running the example script
+
+For more information on how to build and simulate a model, check `Quick Start <https://tellurium.readthedocs.io/en/latest/quickstart.html>`_  and   `libRoadRunner Tutorial <https://sys-bio.github.io/roadrunner/python_docs/using_roadrunner.html>`_.
+
+Creating and Running Cells
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to Jupyter notebook, Spyder IDE allows you to create cells. To create a cell, simply put ``#%%`` in the script. Each ``#%%`` will signal generation of a new cell. To run a cell, press ``shift+enter`` while in focus of a cell. If you want to run only part of a script, you can do it by drag-selecting the part and pressing ``F9``.
+
+Importing Files
+~~~~~~~~~~~~~~~
+
+Tellurium Spyder comes with few plugins to help you import SBML, SED-ML, and COMBINE archives. Under ``File`` menu, press ``Open SBML file`` to open an SBML file and automatically translate it into Antimony string in a new editor tab. To import SED-ML or COMBINE archive, go to ``File`` -> ``Import``. You can import SED-ML or COMBINE archive using either phraSED-ML notation or raw Python output. Tellurium understands phraSED-ML notation. 
+
+.. figure:: ./images/spyder-filemenu.png
+    :align: center
+    :alt: Importing SBML, SED-ML, and COMBINE archives
+    :figclass: align-center
+
+    Importing SBML, SED-ML, and COMBINE archives
+
+RateLaw Plugin
+~~~~~~~~~~~~~~
+
+Tellurium Spyder comes with RateLaw plugin. RateLaw plugin contains a list of various rate laws and allows users to insert rate laws directly to the editor. Simply put, it is a dictionary of rate laws so that you don't have to memorize it. To use it, go to ``Tools`` -> ``Rate Law Library``. You can then choose a rate law, fill in the parameters if you wish, and press ``Insert Rate Law``.
+
+.. figure:: ./images/spyder-ratelaw.png
+    :align: center
+    :alt: RateLaw Plugin
+    :figclass: align-center
+
+    RateLaw Plugin
+    
+Spyder Tips
+~~~~~~~~~~~    
+    
+Both the editor and console window support tab completion. If you are looking for certain functions under a module or a class, simply press ``tab``. 
+
+Spyder IDE also supports various ways to check the documentations. If you wish to know more about a function, press ``ctrl+i`` while the cursur is next to the function to pull up the documentation in the Help window or execute ``help(<function>)`` in IPython console. You can also use ``<function>?`` to know more about the object itself. IPython offers various IPython-specific magic commends. Check it out by running ``?`` without any arguments in the IPython console.
+
+.. figure:: ./images/spyder-help.png
+    :align: center
+    :alt: Pulling documentation in the Help window or through IPython console.
+    :figclass: align-center
+
+    Pulling documentation in the Help window or through IPython console.
+    
+Sometimes, IPython console might crash. Sometimes, you might want to restart the console to free up some memory. Yes, these things happen unfortunately. To researt the console, simply press ``ctrl+.`` in the console or ``right click -> Restart kernel``. While doing so, you might notice that you can open another IPython console as well. 
 
 Further Reading
 ---------------
 
-* `Official Spyder documentation <http://pythonhosted.org/spyder/>`_
+* `Official Spyder documentation <https://docs.spyder-ide.org/>`_
+
+Advanced Topics on Tellurium Spyder
+===================================
+
+Running Jupyter Notebook
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tellurium Spyder comes with Jupyter Notebook by default. To run it, go to ``Start Menu`` -> ``Tellurium Winpython`` -> ``Launch Jupyter Notebook`` or go to Tellurium Spyder installation directory and run ``Jupyter Notebook.exe``.
+
+Running Command Prompt for Tellurium Spyder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes, you might want to run a Windows command prompt with the Python that comes with Tellurium Spyder as the default Python distribution. This can be useful if you wish to install addtional Python packages with more control. To do so, go to ``Start Menu`` -> ``Tellurium Winpython`` -> ``WinPython Command Prompt`` or go to Tellurium Spyder installation directory and run ``WinPython Command Prompt.exe``.
+
+Tellurium Spyder Troubleshooting
+================================
+
+Problem: IPython Console Crashed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this happens, IPython will automatically recover most of the times. If it does not, manually restart the IPython console using ``ctrl+.`` or ``right click -> Restart kernel``.
+
+Problem: Cannot Open Tellruim Spyder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When Spyder IDE crashes, it will automatically try to recover on the next execution. However, if this does not happen, manually run the reset script. To do so, go to ``Start Menu`` -> ``Tellurium Winpython`` -> ``Reset Spyder`` or go to Tellurium Spyder installation directory and run ``Spyder reset.exe``. If Spyder still does not open, we suggest you to clean re-install Tellurium Spyder.
 
 ------------
 

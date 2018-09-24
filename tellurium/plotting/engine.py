@@ -46,6 +46,12 @@ class PlottingEngine(object):
         Needs to be implemented in base class.
         """
 
+    @abc.abstractmethod
+    def newTiledFigure(self, title=None, logX=False, logY=False, layout=None, xtitle=None, ytitle=None):
+        """ Returns PlottingTiledFigure.
+        Needs to be implemented in base class.
+        """
+
     def figureFromXY(self, x, y, **kwargs):
         """ Generate a new figure from x/y data.
 
@@ -56,15 +62,13 @@ class PlottingEngine(object):
         return self.newFigure().plot(x, y, **kwargs)
 
 
-    def figureFromTimecourse(self, m, ordinates=None, tag=None, alpha=None, title=None, xlim=None, ylim=None, **kwargs):
+    def figureFromTimecourse(self, m, ordinates=None, tag=None, alpha=None, title=None, xlim=None, ylim=None, figsize=(9,6), **kwargs):
         """ Generate a new figure from a timecourse simulation.
 
         :param m: An array returned by RoadRunner.simulate.
         :return: instance of PlottingFigure
         """
         fig = self.newFigure()
-        if m.colnames[0] != 'time':
-            raise RuntimeError('Cannot plot timecourse - first column is not time')
 
         for k in range(1, m.shape[1]):
             fig.addXYDataset(m[:,0], m[:,k], name=m.colnames[k], tag=tag, alpha=alpha)
@@ -90,12 +94,12 @@ class PlottingEngine(object):
             self.fig = fig
         return fig
 
-    def plotTimecourse(self, m, title=None, ordinates=None, tag=None, xtitle=None, logx=False, logy=False, ytitle=None, alpha=None, xlim=None, ylim=None, **kwargs):
+    def plotTimecourse(self, m, title=None, ordinates=None, tag=None, xtitle=None, logx=False, logy=False, ytitle=None, alpha=None, xlim=None, ylim=None, figsize=(9,6), **kwargs):
         """ Plots a timecourse from a simulation.
 
         :param m: An array returned by RoadRunner.simulate.
         """
-        fig = self.figureFromTimecourse(m, title=title, ordinates=ordinates, tag=tag, alpha=alpha, xlim=xlim, ylim=ylim)
+        fig = self.figureFromTimecourse(m, title=title, ordinates=ordinates, tag=tag, alpha=alpha, xlim=xlim, ylim=ylim, figsize=figsize)
         if title:
             fig.title = title
         if xtitle:
@@ -110,9 +114,11 @@ class PlottingEngine(object):
             fig.logx = logx
         if logy:
             fig.logy = logy
+        if figsize:
+            fig.figsize = figsize
         fig.render()
 
-    def accumulateTimecourse(self, m, title=None, ordinates=None, tag=None, xtitle=None, logx=False, logy=False, ytitle=None, alpha=None, xlim=None, ylim=None, **kwargs):
+    def accumulateTimecourse(self, m, title=None, ordinates=None, tag=None, xtitle=None, logx=False, logy=False, ytitle=None, alpha=None, xlim=None, ylim=None, figsize=(9,6), **kwargs):
         """ Accumulates the traces instead of plotting (like matplotlib with show=False).
         Call show() to show the plot.
 
@@ -142,7 +148,9 @@ class PlottingEngine(object):
             self.fig.logx = logx
         if logy:
             self.fig.logy = logy
-
+        if figsize:
+            self.fig.figsize = figsize
+            
     def show(self, reset=True):
         """ Shows the traces accummulated from accumulateTimecourse.
 
@@ -182,6 +190,7 @@ class PlottingFigure(object):
         self.selections=selections
         self.xlim = None
         self.ylim = None
+        self.grid_enabled = True
 
     @abc.abstractmethod
     def render(self):
@@ -196,7 +205,7 @@ class PlottingFigure(object):
         :return:
         """
 
-    def addXYDataset(self, x_arr, y_arr, color=None, tag=None, name=None, filter=True, alpha=None, mode=None, logx=None, logy=None):
+    def addXYDataset(self, x_arr, y_arr, color=None, tag=None, name=None, filter=True, alpha=None, mode=None, logx=None, logy=None, scatter=None, error_y_pos=None, error_y_neg=None):
         """ Adds an X/Y dataset to the plot.
 
         :param x_arr: A numpy array describing the X datapoints. Should have the same size as y_arr.
@@ -229,6 +238,12 @@ class PlottingFigure(object):
             self.logx = logx
         if logy is not None:
             self.logy = logy
+        if scatter is not None:
+            dataset['scatter'] = scatter
+        if error_y_pos is not None:
+            dataset['error_y_pos'] = error_y_pos
+        if error_y_neg is not None:
+            dataset['error_y_neg'] = error_y_neg
         self.xy_datasets.append(dataset)
 
     def getMergedTaggedDatasets(self):
@@ -252,7 +267,7 @@ class PlottingFigure(object):
             (dataset for dataset in self.xy_datasets if not 'tag' in dataset))
 
     # TODO: don't need name/names and tag/tags redundancy
-    def plot(self, x, y, colnames=None, title=None, xtitle=None, logx=None, logy=None, ytitle=None, alpha=None, name=None, names=None, tag=None, tags=None):
+    def plot(self, x, y, colnames=None, title=None, xtitle=None, logx=None, logy=None, ytitle=None, alpha=None, name=None, names=None, tag=None, tags=None, scatter=None, error_y_pos=None, error_y_neg=None):
         """ Plot x & y data.
         """
         if xtitle:
@@ -267,6 +282,12 @@ class PlottingFigure(object):
             kws['logx'] = logx
         if logy is not None:
             kws['logy'] = logx
+        if scatter is not None:
+            kws['scatter'] = scatter
+        if error_y_pos is not None:
+            kws['error_y_pos'] = error_y_pos
+        if error_y_neg is not None:
+            kws['error_y_neg'] = error_y_neg
 
         # TODO: if y is 2d array with 1 column, convert to 1d array
         if len(y.shape) > 1:
@@ -288,7 +309,7 @@ class PlottingFigure(object):
             if name is not None:
                 kws['name'] = name
             if tag is not None:
-                kws['tag'] = name
+                kws['tag'] = tag
             elif colnames is not None:
                 kws['name'] = colnames[0]
             self.addXYDataset(x, y, **kws)
@@ -310,3 +331,29 @@ class PlottingFigure(object):
         :param ylim: tuple of min/max values
         """
         self.ylim = ylim
+
+
+class TiledFigure(object):
+    @abc.abstractmethod
+    def nextFigure(self, *args, **kwargs):
+        pass
+
+    def isExhausted(self):
+        return self.rowmarker == self.rows
+
+    def cycleMarker(self):
+        self.colmarker += 1
+        if self.colmarker >= self.cols:
+            self.colmarker = 0
+            self.rowmarker += 1
+            if self.rowmarker >= self.rows:
+                self.rowmarker = self.rows
+
+class LowerTriFigure(TiledFigure):
+    def cycleMarker(self):
+        self.colmarker += 1
+        if self.colmarker > self.rowmarker:
+            self.colmarker = 0
+            self.rowmarker += 1
+            if self.rowmarker >= self.rows:
+                self.rowmarker = self.rows
